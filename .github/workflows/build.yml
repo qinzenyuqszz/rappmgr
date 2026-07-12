@@ -1,0 +1,85 @@
+name: Build RAPPS
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.8"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build onefile (single exe)
+        run: |
+          pyinstaller ^
+            --name RAPPS ^
+            --onefile ^
+            --windowed ^
+            --noconfirm ^
+            --clean ^
+            --add-data "rapps;rapps" ^
+            rapps/main.py
+        working-directory: .
+
+      - name: Build onedir (folder)
+        run: |
+          pyinstaller ^
+            --name RAPPS-dir ^
+            --onedir ^
+            --windowed ^
+            --noconfirm ^
+            --clean ^
+            --add-data "rapps;rapps" ^
+            rapps/main.py
+        working-directory: .
+
+      - name: Upload onefile artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RAPPS-onefile-py${{ matrix.python-version }}
+          path: dist/RAPPS.exe
+          retention-days: 90
+
+      - name: Upload onedir artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RAPPS-onedir-py${{ matrix.python-version }}
+          path: dist/RAPPS-dir/
+          retention-days: 90
+
+      - name: Create release assets
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          Compress-Archive -Path dist/RAPPS.exe -DestinationPath RAPPS-onefile-py${{ matrix.python-version }}.zip
+          Compress-Archive -Path dist/RAPPS-dir -DestinationPath RAPPS-onedir-py${{ matrix.python-version }}.zip
+        shell: pwsh
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            RAPPS-onefile-py${{ matrix.python-version }}.zip
+            RAPPS-onedir-py${{ matrix.python-version }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

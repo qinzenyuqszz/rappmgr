@@ -1,0 +1,4 @@
+# Installed applications log
+WAtomic.txt
+firefox-esr.txt
+vim.txt
