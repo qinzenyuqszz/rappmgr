@@ -40,6 +40,9 @@ class Settings:
     # Logging
     log_enabled: bool = True
 
+    # Language
+    language: str = ""  # empty = auto-detect
+
     def __post_init__(self):
         if not self.download_dir:
             self.download_dir = get_download_directory()

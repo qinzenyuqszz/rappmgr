@@ -18,7 +18,9 @@ if os.getcwd() not in sys.path:
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 
+from rapps.locale import locale_manager
 from rapps.config import APP_TITLE, CMD_INSTALL, CMD_UNINSTALL, CMD_FIND, CMD_INFO, CMD_HELP, CMD_APPWIZ
 from rapps.database import AppDatabase
 from rapps.settings import SettingsManager
@@ -55,12 +57,18 @@ def main():
     app.setApplicationName(APP_TITLE)
     app.setOrganizationName("ReactOS")
 
+    # Set application icon
+    _set_app_icon(app)
+
     # Parse command line
     cmd = parse_command_line(sys.argv)
 
     # Load settings
     settings_mgr = SettingsManager()
     settings = settings_mgr.load()
+
+    # Set language
+    _set_language(settings, app)
 
     # Initialize database
     db = AppDatabase()
@@ -84,6 +92,28 @@ def main():
         window.handle_command(cmd["command"], cmd["args"])
 
     sys.exit(app.exec())
+
+
+def _set_app_icon(app: QApplication):
+    """Set the application icon from the ico directory."""
+    icon_paths = [
+        os.path.join(_script_dir, "..", "ico", "main.ico"),
+        os.path.join(os.getcwd(), "ico", "main.ico"),
+    ]
+    for path in icon_paths:
+        if os.path.exists(path):
+            app.setWindowIcon(QIcon(path))
+            return
+
+
+def _set_language(settings, app: QApplication):
+    """Set the application language based on settings."""
+    lang = settings.language if settings.language else None
+    if lang:
+        locale_manager.set_language(lang, app)
+    else:
+        system_lang = locale_manager.detect_system_language()
+        locale_manager.set_language(system_lang, app)
 
 
 if __name__ == "__main__":

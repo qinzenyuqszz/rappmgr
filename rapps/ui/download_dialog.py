@@ -15,6 +15,7 @@ from ..downloader import download_file, DownloadProgress, DownloadWorker
 from ..app_info import AvailableAppInfo
 from ..installer import Installer, InstallResult
 from ..config import INSTALLER_GENERATE
+from ..locale import locale_manager
 
 
 class DownloadDialog(QDialog):
@@ -25,7 +26,7 @@ class DownloadDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Downloading...")
+        self.setWindowTitle(locale_manager.tr("DownloadDialog", "Downloading..."))
         self.setModal(True)
         self.setMinimumWidth(500)
         self.setMinimumHeight(300)
@@ -42,7 +43,7 @@ class DownloadDialog(QDialog):
         layout = QVBoxLayout(self)
 
         # Status label
-        self._status_label = QLabel("Preparing downloads...")
+        self._status_label = QLabel(locale_manager.tr("DownloadDialog", "Preparing downloads..."))
         layout.addWidget(self._status_label)
 
         # Progress bar
@@ -59,7 +60,7 @@ class DownloadDialog(QDialog):
         button_layout = QHBoxLayout()
         button_layout.addStretch()
 
-        self._cancel_button = QPushButton("Cancel")
+        self._cancel_button = QPushButton(locale_manager.tr("DownloadDialog", "Cancel"))
         self._cancel_button.clicked.connect(self._on_cancel)
         button_layout.addWidget(self._cancel_button)
 

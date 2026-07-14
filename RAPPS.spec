@@ -5,7 +5,7 @@ a = Analysis(
     ['rapps\\main.py'],
     pathex=[],
     binaries=[],
-    datas=[('rapps', 'rapps')],
+    datas=[('rapps', 'rapps'), ('ico', 'ico')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -35,4 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['ico\\main.ico'],
 )

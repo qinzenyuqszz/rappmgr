@@ -17,7 +17,7 @@ from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QAction, QKeySequence
 
 from ..config import (
-    APP_TITLE, APPWIZ_TITLE, CATEGORIES,
+    APP_TITLE, APPWIZ_TITLE,
     CATEGORY_INSTALLED, CATEGORY_UPDATES, CATEGORY_SELECTED,
     CATEGORY_ALL_AVAIL, CATEGORY_ALL_INST,
 )
@@ -25,6 +25,7 @@ from ..app_info import AppType, AppCategory, AvailableAppInfo, InstalledAppInfo
 from ..database import AppDatabase
 from ..installer import Installer
 from ..settings import Settings, SettingsManager
+from ..locale import locale_manager
 
 from .category_tree import CategoryTree
 from .app_list import ApplicationList
@@ -101,81 +102,92 @@ class MainWindow(QMainWindow):
         # Status bar
         self._status_bar = QStatusBar()
         self.setStatusBar(self._status_bar)
-        self._status_label = QLabel("Ready")
+        self._status_label = QLabel("")
         self._status_bar.addWidget(self._status_label)
 
         # Selected count label
         self._selected_label = QLabel("")
         self._status_bar.addPermanentWidget(self._selected_label)
 
+        # Set initial status text
+        self._update_status_text()
+
     def _setup_menu(self):
         """Build the menu bar."""
+        self._setup_menu_actions()
+
+    def _setup_menu_actions(self):
+        """Build menu bar actions with translated strings."""
         menubar = self.menuBar()
+        # Clear existing menus if re-translating
+        menubar.clear()
+
+        tr = locale_manager.tr
 
         # File menu
-        file_menu = menubar.addMenu("&File")
+        file_menu = menubar.addMenu(tr("MainWindow", "&File"))
 
-        settings_action = QAction("Settings...", self)
+        settings_action = QAction(tr("MainWindow", "Settings..."), self)
         settings_action.setShortcut(QKeySequence("Ctrl+,"))
         settings_action.triggered.connect(self._show_settings)
         file_menu.addAction(settings_action)
 
         file_menu.addSeparator()
 
-        exit_action = QAction("E&xit", self)
+        exit_action = QAction(tr("MainWindow", "E&xit"), self)
         exit_action.setShortcut(QKeySequence("Ctrl+Q"))
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
         # Actions menu
-        actions_menu = menubar.addMenu("&Actions")
+        actions_menu = menubar.addMenu(tr("MainWindow", "&Actions"))
 
-        refresh_action = QAction("&Refresh", self)
+        refresh_action = QAction(tr("MainWindow", "&Refresh"), self)
         refresh_action.setShortcut(QKeySequence("F5"))
         refresh_action.triggered.connect(self._refresh)
         actions_menu.addAction(refresh_action)
 
-        reset_db_action = QAction("&Reset Database", self)
+        reset_db_action = QAction(tr("MainWindow", "&Reset Database"), self)
         reset_db_action.triggered.connect(self._reset_database)
         actions_menu.addAction(reset_db_action)
 
         actions_menu.addSeparator()
 
-        install_action = QAction("&Install", self)
+        install_action = QAction(tr("MainWindow", "&Install"), self)
         install_action.setShortcut(QKeySequence("Ctrl+I"))
         install_action.triggered.connect(self._install_selected)
         actions_menu.addAction(install_action)
 
-        uninstall_action = QAction("&Uninstall", self)
+        uninstall_action = QAction(tr("MainWindow", "&Uninstall"), self)
         uninstall_action.setShortcut(QKeySequence("Ctrl+U"))
         uninstall_action.triggered.connect(self._uninstall_selected)
         actions_menu.addAction(uninstall_action)
 
-        modify_action = QAction("&Modify", self)
+        modify_action = QAction(tr("MainWindow", "&Modify"), self)
         modify_action.triggered.connect(self._modify_selected)
         actions_menu.addAction(modify_action)
 
         actions_menu.addSeparator()
 
-        check_all_action = QAction("Check &All", self)
+        check_all_action = QAction(tr("MainWindow", "Check &All"), self)
         check_all_action.setShortcut(QKeySequence("Ctrl+A"))
         check_all_action.triggered.connect(lambda: self._app_list.check_all(True))
         actions_menu.addAction(check_all_action)
 
-        uncheck_all_action = QAction("&Uncheck All", self)
+        uncheck_all_action = QAction(tr("MainWindow", "&Uncheck All"), self)
         uncheck_all_action.triggered.connect(lambda: self._app_list.check_all(False))
         actions_menu.addAction(uncheck_all_action)
 
         # Search
-        search_action = QAction("&Search", self)
+        search_action = QAction(tr("MainWindow", "&Search"), self)
         search_action.setShortcut(QKeySequence("Ctrl+F"))
         search_action.triggered.connect(self._app_list.focus_search)
         actions_menu.addAction(search_action)
 
         # Help menu
-        help_menu = menubar.addMenu("&Help")
+        help_menu = menubar.addMenu(tr("MainWindow", "&Help"))
 
-        about_action = QAction("&About", self)
+        about_action = QAction(tr("MainWindow", "&About"), self)
         about_action.triggered.connect(self._show_about)
         help_menu.addAction(about_action)
 
@@ -203,19 +215,22 @@ class MainWindow(QMainWindow):
 
     def _on_available_updated(self, success: bool):
         """Called when available apps database is updated."""
+        tr = locale_manager.tr
         if success:
-            self._status_label.setText(f"Database updated: {self._db.get_available_count()} applications available")
+            count = self._db.get_available_count()
+            self._status_label.setText(tr("MainWindow", f"Database updated: {count} applications available").replace(str(count), "{}", 1).format(count))
             # Refresh current view
             self._refresh_current_view()
         else:
-            self._status_label.setText("Failed to update database (using cached data)")
+            self._status_label.setText(tr("MainWindow", "Failed to update database (using cached data)"))
 
     def _load_installed_apps(self):
         """Load installed applications from registry."""
         self._db.update_installed()
         self._app_list.set_apps(list(self._db.installed_apps.values()))
         self._app_list.set_display_type(AppType.INSTALLED)
-        self._status_label.setText(f"{self._db.get_installed_count()} applications installed")
+        count = self._db.get_installed_count()
+        self._status_label.setText(f"{count} {locale_manager.tr('MainWindow', 'applications installed')}")
 
     def _refresh(self):
         """Refresh the current view."""
@@ -230,9 +245,10 @@ class MainWindow(QMainWindow):
 
     def _reset_database(self):
         """Reset the database - delete cache and re-download."""
+        tr = locale_manager.tr
         reply = QMessageBox.question(
-            self, "Reset Database",
-            "This will delete the local database cache and re-download it. Continue?",
+            self, tr("MainWindow", "Reset Database"),
+            tr("MainWindow", "This will delete the local database cache and re-download it. Continue?"),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
         if reply == QMessageBox.StandardButton.Yes:
@@ -329,18 +345,23 @@ class MainWindow(QMainWindow):
 
     def _uninstall_app(self, app: InstalledAppInfo):
         """Uninstall an application."""
+        tr = locale_manager.tr
         reply = QMessageBox.question(
-            self, "Uninstall",
-            f"Are you sure you want to uninstall {app.display_name}?",
+            self, tr("MainWindow", "Uninstall"),
+            tr("MainWindow", "Are you sure you want to uninstall %s?") % app.display_name,
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
         if reply == QMessageBox.StandardButton.Yes:
             success = self._installer.uninstall_app(app)
             if success:
-                QMessageBox.information(self, "Success", f"{app.display_name} has been uninstalled.")
+                QMessageBox.information(
+                    self, tr("MainWindow", "Success"),
+                    f"{app.display_name} {tr('MainWindow', 'has been uninstalled.')}")
                 self._refresh_current_view()
             else:
-                QMessageBox.warning(self, "Error", f"Failed to uninstall {app.display_name}.")
+                QMessageBox.warning(
+                    self, tr("MainWindow", "Error"),
+                    f"{tr('MainWindow', 'Failed to uninstall')} {app.display_name}.")
 
     def _uninstall_selected(self):
         """Uninstall the selected installed application."""
@@ -369,23 +390,29 @@ class MainWindow(QMainWindow):
 
     def _show_about(self):
         """Show the about dialog."""
+        tr = locale_manager.tr
         QMessageBox.about(
-            self, "About",
+            self, tr("MainWindow", "About"),
             f"<h2>{APP_TITLE}</h2>"
-            f"<p>Version 1.0.0 (Python/PySide6)</p>"
-            f"<p>A rewrite of the ReactOS Application Manager.</p>"
-            f"<p>Original C++ code copyright ReactOS contributors.</p>"
-            f"<p>Python rewrite licensed under GPL-2.0-or-later.</p>",
+            f"<p>{tr('MainWindow', 'Version 1.0.0 (Python/PySide6)')}</p>"
+            f"<p>{tr('MainWindow', 'A rewrite of the ReactOS Application Manager.')}</p>"
+            f"<p>{tr('MainWindow', 'Original C++ code copyright ReactOS contributors.')}</p>"
+            f"<p>{tr('MainWindow', 'Python rewrite licensed under GPL-2.0-or-later.')}</p>",
         )
 
     def _update_status(self):
         """Update the status bar text."""
         total = self._app_list._table.rowCount()
         selected = len(self._selected_apps)
+        tr = locale_manager.tr
         if self._app_list.display_type == AppType.AVAILABLE and selected > 0:
-            self._selected_label.setText(f"  |  {selected} selected for installation")
+            self._selected_label.setText(f"  |  {selected} {tr('MainWindow', 'selected for installation')}")
         else:
             self._selected_label.setText("")
+
+    def _update_status_text(self):
+        """Set the initial status text."""
+        self._status_label.setText(locale_manager.tr("MainWindow", "Ready"))
 
     def handle_command(self, command: str, args: list):
         """Handle command-line arguments."""

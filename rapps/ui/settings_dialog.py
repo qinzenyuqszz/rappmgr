@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 from ..settings import Settings
+from ..locale import locale_manager, LANGUAGE_NAMES
 
 
 class SettingsDialog(QDialog):
@@ -34,6 +35,23 @@ class SettingsDialog(QDialog):
         # --- General Settings ---
         general_group = QGroupBox("General")
         general_layout = QFormLayout(general_group)
+
+        # Language selector
+        self._language_combo = QComboBox()
+        self._language_combo.addItems(
+            [f"{name} ({code})" if code != "en" else name for code, name in LANGUAGE_NAMES.items()]
+        )
+        current_idx = 0
+        for i, code in enumerate(LANGUAGE_NAMES.keys()):
+            if code == self._temp_settings.language:
+                current_idx = i
+                break
+        self._language_combo.setCurrentIndex(current_idx)
+        general_layout.addRow("Language:", self._language_combo)
+
+        self._language_note = QLabel("Restart the application for language changes to take effect.")
+        self._language_note.setStyleSheet("color: gray; font-style: italic;")
+        general_layout.addRow(self._language_note)
 
         self._update_at_start = QCheckBox("Update database at startup")
         self._update_at_start.setChecked(self._temp_settings.update_at_start)
@@ -131,6 +149,10 @@ class SettingsDialog(QDialog):
 
     def _accept(self):
         """Apply settings and close."""
+        # Save language setting
+        selected_lang = list(LANGUAGE_NAMES.keys())[self._language_combo.currentIndex()]
+        self._temp_settings.language = selected_lang
+
         self._temp_settings.update_at_start = self._update_at_start.isChecked()
         self._temp_settings.save_window_pos = self._save_window_pos.isChecked()
         self._temp_settings.log_enabled = self._log_enabled.isChecked()

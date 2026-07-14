@@ -9,6 +9,7 @@ from PySide6.QtCore import Qt, Signal, QUrl
 from PySide6.QtGui import QDesktopServices
 
 from ..app_info import AppType, compare_versions
+from ..locale import locale_manager
 
 
 class InfoPanel(QWidget):
@@ -46,108 +47,110 @@ class InfoPanel(QWidget):
 
     def _show_available_info(self, app):
         """Show info for an available (downloadable) application."""
+        tr = locale_manager.tr
         html = []
         html.append(f"<h2>{app.display_name or app.identifier}</h2>")
 
         # Status
         is_installed, installed_ver, has_update = self._check_install_status(app)
         if has_update:
-            html.append(f"<p><i>Update available (installed: {installed_ver})</i></p>")
+            html.append(f"<p><i>{tr('InfoPanel', 'Update available')} ({installed_ver})</i></p>")
         elif is_installed:
-            html.append("<p><i>Installed</i></p>")
+            html.append(f"<p><i>{tr('InfoPanel', 'Installed')}</i></p>")
         else:
-            html.append("<p><i>Not installed</i></p>")
+            html.append(f"<p><i>{tr('InfoPanel', 'Not installed')}</i></p>")
 
-        html.append(f"<p><b>Available version:</b> {app.display_version or 'N/A'}</p>")
+        html.append(f"<p><b>{tr('InfoPanel', 'Available version:')}</b> {app.display_version or 'N/A'}</p>")
 
         # License
         license_str = app.get_license_string()
         if license_str:
-            html.append(f"<p><b>License:</b> {license_str}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'License:')}</b> {license_str}</p>")
 
         # Size
         size_str = app.get_size_string()
         if size_str:
-            html.append(f"<p><b>Size:</b> {size_str}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Size:')}</b> {size_str}</p>")
 
         # URL
         url_site = app._get_url_site() if hasattr(app, '_get_url_site') else ""
         if url_site:
-            html.append(f'<p><b>Website:</b> <a href="{url_site}">{url_site}</a></p>')
+            html.append(f'<p><b>{tr("InfoPanel", "Website:")}</b> <a href="{url_site}">{url_site}</a></p>')
 
         # Description
         if app.comments:
-            html.append(f"<p><b>Description:</b> {app.comments}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Description:')}</b> {app.comments}</p>")
 
         # Download URL
         url_download = app._get_url_download() if hasattr(app, '_get_url_download') else ""
         if url_download:
-            html.append(f'<p><b>Download URL:</b> <a href="{url_download}">{url_download}</a></p>')
+            html.append(f'<p><b>{tr("InfoPanel", "Download URL:")}</b> <a href="{url_download}">{url_download}</a></p>')
 
         # Package name
-        html.append(f"<p><b>Package:</b> {app.identifier}</p>")
+        html.append(f"<p><b>{tr('InfoPanel', 'Package:')}</b> {app.identifier}</p>")
 
         # Languages
         languages = app.retrieve_languages() if hasattr(app, 'retrieve_languages') else []
         if languages:
-            html.append(f"<p><b>Languages:</b> {', '.join(hex(l) for l in languages)}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Languages:')}</b> {', '.join(hex(l) for l in languages)}</p>")
 
         # Action buttons info
         html.append("<hr>")
         if is_installed and not has_update:
-            html.append("<p><i>This application is already installed.</i></p>")
+            html.append(f"<p><i>{tr('InfoPanel', 'This application is already installed.')}</i></p>")
         else:
-            html.append('<p><a href="install" style="color:blue;text-decoration:underline;">Click here to Install</a></p>')
+            html.append(f'<p><a href="install" style="color:blue;text-decoration:underline;">{tr("InfoPanel", "Click here to Install")}</a></p>')
 
         self._text_browser.setHtml("\n".join(html))
 
     def _show_installed_info(self, app):
         """Show info for an installed application."""
+        tr = locale_manager.tr
         html = []
         html.append(f"<h2>{app.display_name}</h2>")
-        html.append(f"<p><b>Version:</b> {app.display_version or 'N/A'}</p>")
+        html.append(f"<p><b>{tr('InfoPanel', 'Version:')}</b> {app.display_version or 'N/A'}</p>")
 
         if app.publisher:
-            html.append(f"<p><b>Publisher:</b> {app.publisher}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Publisher:')}</b> {app.publisher}</p>")
 
         if app.reg_owner:
-            html.append(f"<p><b>Registered owner:</b> {app.reg_owner}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Registered owner:')}</b> {app.reg_owner}</p>")
 
         if app.product_id:
-            html.append(f"<p><b>Product ID:</b> {app.product_id}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Product ID:')}</b> {app.product_id}</p>")
 
         if app.help_link:
-            html.append(f'<p><b>Help:</b> <a href="{app.help_link}">{app.help_link}</a></p>')
+            html.append(f'<p><b>{tr("InfoPanel", "Help:")}</b> <a href="{app.help_link}">{app.help_link}</a></p>')
 
         if app.read_me:
-            html.append(f"<p><b>Readme:</b> {app.read_me}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Readme:')}</b> {app.read_me}</p>")
 
         if app.contact:
-            html.append(f"<p><b>Contact:</b> {app.contact}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Contact:')}</b> {app.contact}</p>")
 
         if app.install_date:
-            html.append(f"<p><b>Install date:</b> {app.install_date}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Install date:')}</b> {app.install_date}</p>")
 
         if app.install_location:
-            html.append(f"<p><b>Install location:</b> {app.install_location}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Install location:')}</b> {app.install_location}</p>")
 
         if app.install_source:
-            html.append(f"<p><b>Install source:</b> {app.install_source}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Install source:')}</b> {app.install_source}</p>")
 
         if app.comments:
-            html.append(f"<p><b>Comments:</b> {app.comments}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Comments:')}</b> {app.comments}</p>")
 
         if app.uninstall_string:
-            html.append(f"<p><b>Uninstall string:</b> {app.uninstall_string}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Uninstall string:')}</b> {app.uninstall_string}</p>")
 
         if app.modify_string:
-            html.append(f"<p><b>Modify string:</b> {app.modify_string}</p>")
+            html.append(f"<p><b>{tr('InfoPanel', 'Modify string:')}</b> {app.modify_string}</p>")
 
         # Action buttons
         html.append("<hr>")
-        html.append('<p><a href="uninstall" style="color:red;text-decoration:underline;">Uninstall</a></p>')
+        html.append(f'<p><a href="uninstall" style="color:red;text-decoration:underline;">{tr("InfoPanel", "Uninstall")}</a></p>')
         if app.modify_string:
-            html.append('<p><a href="modify" style="color:blue;text-decoration:underline;">Modify</a></p>')
+            html.append(f'<p><a href="modify" style="color:blue;text-decoration:underline;">{tr("InfoPanel", "Modify")}</a></p>')
 
         self._text_browser.setHtml("\n".join(html))
 

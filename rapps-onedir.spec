@@ -1,13 +1,21 @@
 # -*- mode: python ; coding: utf-8 -*-
 """PyInstaller spec for RAPPS onedir build."""
 
+import os
+
 block_cipher = None
+
+# Icon path
+icon_path = os.path.join('ico', 'main.ico')
 
 a = Analysis(
     [r'rapps\main.py'],
     pathex=[],
     binaries=[],
-    datas=[(r'rapps', 'rapps')],
+    datas=[
+        (r'rapps', 'rapps'),
+        (r'ico', 'ico'),
+    ],
     hiddenimports=[
         'PySide6',
         'PySide6.QtCore',
@@ -45,6 +53,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=icon_path if os.path.exists(icon_path) else None,
 )
 
 coll = COLLECT(

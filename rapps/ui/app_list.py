@@ -11,6 +11,7 @@ from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QFont
 
 from ..app_info import AppType, AppCategory, compare_versions
+from ..locale import locale_manager
 
 
 # Column indices
@@ -45,16 +46,22 @@ class ApplicationList(QWidget):
 
         # Search bar
         search_layout = QHBoxLayout()
-        search_label = QLabel("Search:")
+        tr = locale_manager.tr
+        search_label = QLabel(tr("ApplicationList", "Search:"))
         self._search_edit = QLineEdit()
-        self._search_edit.setPlaceholderText("Type to search...")
+        self._search_edit.setPlaceholderText(tr("ApplicationList", "Type to search..."))
         self._search_edit.textChanged.connect(self._on_search_changed)
         search_layout.addWidget(search_label)
         search_layout.addWidget(self._search_edit)
 
         # Table
         self._table = QTableWidget(0, 5)
-        self._table.setHorizontalHeaderLabels(["", "Name", "Version", "Size", "Status"])
+        self._table.setHorizontalHeaderLabels([
+            "", tr("ApplicationList", "Name"),
+            tr("ApplicationList", "Version"),
+            tr("ApplicationList", "Size"),
+            tr("ApplicationList", "Status"),
+        ])
         self._table.horizontalHeader().setSectionResizeMode(COL_NAME, QHeaderView.Stretch)
         self._table.horizontalHeader().setSectionResizeMode(COL_VERSION, QHeaderView.ResizeToContents)
         self._table.horizontalHeader().setSectionResizeMode(COL_SIZE, QHeaderView.ResizeToContents)
@@ -189,8 +196,9 @@ class ApplicationList(QWidget):
 
     def _get_status_text(self, app) -> str:
         """Get status text for an application."""
+        tr = locale_manager.tr
         if self._display_type == AppType.INSTALLED:
-            return "Installed"
+            return tr("ApplicationList", "Installed")
 
         # For available apps, check if already installed
         from ..database import AppDatabase
@@ -206,11 +214,11 @@ class ApplicationList(QWidget):
                 break
 
         if has_update:
-            return f"Update available ({installed_ver})"
+            return f"{tr('ApplicationList', 'Update available')} ({installed_ver})"
         elif is_installed:
-            return "Installed"
+            return tr("ApplicationList", "Installed")
         else:
-            return "Not installed"
+            return tr("ApplicationList", "Not installed")
 
     def _on_selection_changed(self):
         """Handle row selection change."""

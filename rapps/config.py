@@ -3,6 +3,7 @@ Configuration constants for RAPPS.
 """
 
 import os
+from typing import Optional
 
 APP_NAME = "RAPPS"
 APP_TITLE = "ReactOS Application Manager"
@@ -17,25 +18,56 @@ DATABASE_SUBDIR = "appdb"
 SETTINGS_REG_KEY = r"Software\ReactOS\RAPPS"
 UNINSTALL_SUBKEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall"
 
-# Categories
+# Category definitions (source strings for translation)
 CATEGORIES = {
-    1:  ("Audio",            "Category Audio"),
-    2:  ("Video",            "Category Video"),
-    3:  ("Graphics",         "Category Graphics"),
-    4:  ("Games",            "Category Games"),
-    5:  ("Internet",         "Category Internet"),
-    6:  ("Office",           "Category Office"),
-    7:  ("Development",      "Category Development"),
-    8:  ("Edutainment",      "Category Edutainment"),
-    9:  ("Engineering",      "Category Engineering"),
-    10: ("Finance",          "Category Finance"),
-    11: ("Science",          "Category Science"),
-    12: ("Tools",            "Category Tools"),
-    13: ("Drivers",          "Category Drivers"),
-    14: ("Libraries",        "Category Libraries"),
-    15: ("Themes",           "Category Themes"),
-    16: ("Other",            "Category Other"),
+    1:  "Audio",
+    2:  "Video",
+    3:  "Graphics",
+    4:  "Games",
+    5:  "Internet",
+    6:  "Office",
+    7:  "Development",
+    8:  "Edutainment",
+    9:  "Engineering",
+    10: "Finance",
+    11: "Science",
+    12: "Tools",
+    13: "Drivers",
+    14: "Libraries",
+    15: "Themes",
+    16: "Other",
 }
+
+# Category display names (can be overridden by locale)
+CATEGORY_NAMES = {
+    "installed": "Installed",
+    "updates": "Updates",
+    "selected": "Selected",
+    "all_available": "All Available",
+    "all_installed": "All Installed",
+}
+
+
+def get_category_display_name(cat_id: int, translator=None) -> str:
+    """Get the display name for a category, optionally translated."""
+    name = CATEGORIES.get(cat_id, f"Category {cat_id}")
+    if translator:
+        return translator("CategoryTree", name)
+    return name
+
+
+def get_category_root_names(translator=None) -> dict:
+    """Get translated category root names."""
+    names = {
+        "installed_root": "Installed Applications",
+        "installed": "Applications",
+        "updates": "Updates",
+        "selected": "Selected for Installation",
+        "available_root": "Available for Installation",
+    }
+    if translator:
+        return {k: translator("CategoryTree", v) for k, v in names.items()}
+    return names
 
 CATEGORY_INSTALLED = "installed"
 CATEGORY_UPDATES   = "updates"
